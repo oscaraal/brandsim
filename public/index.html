@@ -237,15 +237,7 @@ body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(
 #toast.show { transform: translateX(-50%) translateY(0); }
 
 /* AI ANALYSIS BOX */
-.ai-box { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-.ai-box .ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.ai-box .ai-icon { font-size: 20px; }
-.ai-box .ai-title { font-size: 12px; font-weight: 800; color: var(--dark); text-transform: uppercase; letter-spacing: .06em; }
-.ai-box .ai-badge { background: var(--aqua); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: .06em; text-transform: uppercase; }
-.ai-box .ai-body { font-size: 13px; color: var(--gray); line-height: 1.6; font-family: 'Source Serif 4', serif; }
-.ai-box .ai-body.loading::after { content: '▋'; animation: blink .8s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-.ai-loading { color: var(--aqua); font-style: italic; }
+
 
 /* TOPICS PROGRESS */
 .topics-progress { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
@@ -1384,15 +1376,6 @@ function renderResults(room) {
       </div>
     </div>
 
-    <div class="ai-box">
-      <div class="ai-header">
-        <span class="ai-icon">🤖</span>
-        <span class="ai-title">Análisis de Marca IA</span>
-        <span class="ai-badge">Claude</span>
-      </div>
-      <div class="ai-body loading" id="ai-analysis">Generando análisis académico...</div>
-    </div>
-
     ${state.role==='professor' ? `
     <div class="prof-panel">
       <h3>🎛️ Controles Profesor</h3>
@@ -1416,60 +1399,9 @@ function renderResults(room) {
   }
 
   // Generate AI analysis
-  generateAIAnalysis(room, topic, sorted);
 }
 
-// ══════════════════════════════════════════
-// AI ANALYSIS (Anthropic API)
-// ══════════════════════════════════════════
-async function generateAIAnalysis(room, topic, sorted) {
-  const leader = getBrand(sorted[0]);
-  const leaderSub = room.submissions?.[sorted[0]];
-  const leaderEquity = (room.equity[sorted[0]]||INITIAL_EQUITY).toFixed(1);
-  const prevHistory = room.history.length>1 ? room.history[room.history.length-2] : null;
 
-  const decisionSummary = sorted.slice(0,3).map(bid => {
-    const b = getBrand(bid);
-    const sub = room.submissions?.[bid];
-    if(!sub) return `${b.name}: sin decisión`;
-    const decisions = Object.entries(sub.decisions||{}).map(([levId, optId]) => {
-      const lev = topic.levers.find(l=>l.id===levId);
-      const opt = lev?.options.find(o=>o.id===optId);
-      return `${lev?.name}: ${opt?.label}`;
-    }).join('; ');
-    const strat = topic.strategies.find(s=>s.id===sub.strategy);
-    return `${b.emoji} ${b.name} (VCM ${(room.equity[bid]||INITIAL_EQUITY).toFixed(1)}): [${decisions}] Estrategia: ${strat?.name}`;
-  }).join('\n');
-
-  const prompt = `Eres un profesor experto en Administración de Marca (Keller, Aaker) en UDLAP. Analiza brevemente (3-4 oraciones) los resultados de la ronda "${topic.title}" de este simulador académico.
-
-Decisiones principales (top 3 marcas):
-${decisionSummary}
-
-Líder: ${leader.emoji} ${leader.name} con VCM ${leaderEquity}
-Evento de marca activo: ${room.event?.text || 'ninguno'}
-
-Proporciona: (1) Por qué el líder tomó las mejores decisiones según teoría de VCM, (2) Qué concepto del tema (${topic.title}) explica mejor los resultados, (3) Una recomendación para la siguiente ronda. Responde en español, tono académico profesional.`;
-
-  try {
-    const response = await fetch('/api/ai-analysis', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await response.json();
-    const text = data.content?.find(c=>c.type==='text')?.text || 'Sin análisis disponible.';
-    const el = document.getElementById('ai-analysis');
-    if(el) { el.textContent = text; el.classList.remove('loading'); }
-  } catch(e) {
-    const el = document.getElementById('ai-analysis');
-    if(el) { el.textContent = 'Análisis no disponible en este momento.'; el.classList.remove('loading'); }
-  }
-}
 
 // ══════════════════════════════════════════
 // NEXT / END / INJECT
