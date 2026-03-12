@@ -1238,12 +1238,21 @@ async function advanceRound() {
   const newEquity = {...room.equity};
   const scores = {};
 
+  const feedbackMap = {};
+
   room.brands.forEach(bid => {
     const sub = (room.submissions||{})[bid];
-    if(!sub) { scores[bid]=0; return; }
-    let score = 0;
+    if(!sub) {
+      scores[bid] = 0;
+      feedbackMap[bid] = ["⚠️ El equipo no envió decisiones a tiempo. Se asume inactividad en el mercado."];
+      return;
+    }
 
-    // Sum scores from lever options selected
+    let score = 0;
+    let multiplier = 1.0;
+    let feedback = [];
+
+    // 1. Suma base de palancas seleccionadas
     topic.levers.forEach(lev => {
       const optId = sub.decisions[lev.id];
       if(optId) {
@@ -1252,40 +1261,155 @@ async function advanceRound() {
       }
     });
 
-    // Apply strategy multiplier
-    const strat = topic.strategies.find(s=>s.id===sub.strategy);
-    if(strat) score *= strat.multiplier;
-
-    // Apply event effects
-    if(room.event) {
-      if(sub.decisions[room.event.lever]) {
-        if(room.event.bonus) score *= room.event.bonus;
-      } else if(room.event.penalty) {
-        score *= room.event.penalty;
+    // 2. MOTOR DE DISONANCIA POR TEMA
+    if (room.round === 1) {
+      const price = sub.decisions['pricing'];
+      const dist = sub.decisions['distribution'];
+      if (price === 'premium' && dist === 'mass') {
+        multiplier *= 0.70;
+        feedback.push("🚨 Disonancia Estratégica: Tu precio Premium perdió credibilidad con distribución masiva. Has comoditizado la marca a ojos del consumidor.");
+      } else if (price === 'premium' && dist === 'exclusive') {
+        multiplier *= 1.25;
+        feedback.push("🌟 Sinergia Lograda: La distribución exclusiva justifica tu precio Premium, elevando la percepción de calidad y exclusividad.");
+      } else if (price === 'penetration' && dist === 'exclusive') {
+        multiplier *= 0.80;
+        feedback.push("⚠️ Incoherencia: Una estrategia de penetración requiere alto volumen, pero tu distribución exclusiva limitó severamente el alcance.");
+      } else {
+        feedback.push("✅ Mix de marketing estable: No se detectaron contradicciones graves entre precio y distribución.");
+      }
+    }
+    else if (room.round === 2) {
+      const source = sub.decisions['secondary_source'];
+      const celebFit = sub.decisions['celebrity_fit'];
+      const measurement = sub.decisions['measurement'];
+      if (source === 'celebrity' && celebFit === 'controversy') {
+        multiplier *= 0.72;
+        feedback.push("🚨 Riesgo Reputacional: Apostar por una figura polémica sin alineación de valores genera buzz pero erosiona la credibilidad de las asociaciones secundarias.");
+      } else if (source === 'celebrity' && celebFit === 'relevance') {
+        multiplier *= 1.22;
+        feedback.push("🌟 Alianza Auténtica: La congruencia entre la celebridad y los valores de tu marca maximiza la transferencia de asociaciones positivas al VCM.");
+      } else if (source === 'cobranding' && measurement === 'financial') {
+        multiplier *= 1.18;
+        feedback.push("🌟 Co-branding Medido: Vincular el co-branding a una valuación financiera sólida demuestra responsabilidad estratégica y facilita la aprobación del directorio.");
+      } else if (source === 'licensing' && measurement === 'brand_tracking') {
+        multiplier *= 0.85;
+        feedback.push("⚠️ Control Insuficiente: El licenciamiento sin una medición profunda del CBBE puede degradar la marca madre si el licenciatario no mantiene los estándares.");
+      } else {
+        feedback.push("✅ Apalancamiento secundario estable: Las asociaciones externas no presentaron conflictos de imagen significativos.");
+      }
+    }
+    else if (room.round === 3) {
+      const arch = sub.decisions['architecture'];
+      const cause = sub.decisions['cause'];
+      if (arch === 'house_brands' && cause === 'environmental') {
+        multiplier *= 0.85;
+        feedback.push("⚠️ Esfuerzo Diluido: Es ineficiente permear una causa ambiental en un portafolio fragmentado (House of Brands). El mensaje se pierde entre marcas.");
+      } else if (arch === 'branded_house' && cause !== 'no_cause') {
+        multiplier *= 1.20;
+        feedback.push("🌟 Sinergia de Propósito: Tu arquitectura Branded House apalancó perfectamente la causa, unificando el propósito corporativo en todos los productos.");
+      } else if (arch === 'house_brands' && cause === 'no_cause') {
+        multiplier *= 1.10;
+        feedback.push("✅ Consistencia Funcional: Un portafolio independiente sin causa social mantiene claridad de posicionamiento por producto, aunque limita el paraguas corporativo.");
+      } else {
+        feedback.push("✅ Arquitectura coherente: La estructura del portafolio soporta adecuadamente las decisiones operativas de esta ronda.");
+      }
+    }
+    else if (room.round === 4) {
+      const extType = sub.decisions['extension_type'];
+      const evalFit = sub.decisions['consumer_eval'];
+      const canib = sub.decisions['cannibalization'];
+      if (extType === 'category' && evalFit === 'fit' && canib === 'differentiate') {
+        multiplier *= 1.25;
+        feedback.push("🌟 Estrategia Impecable: Extensión de categoría con alto ajuste percibido y diferenciación clara protege la marca madre mientras conquista nuevos mercados.");
+      } else if (extType === 'stretch' && evalFit === 'novelty' && canib === 'accept') {
+        multiplier *= 0.70;
+        feedback.push("🚨 Dilución Crítica: Un estiramiento lejano basado solo en novedad, aceptando canibalización, ha confundido a tus consumidores leales. El VCM principal sufrió daños severos.");
+      } else if (extType === 'line' && canib === 'segment') {
+        multiplier *= 0.90;
+        feedback.push("⚠️ Sobreprotección: Una extensión de línea simple rara vez requiere segmentación defensiva compleja. Los costos operativos innecesarios limitaron tu rentabilidad.");
+      } else {
+        feedback.push("✅ Extensión moderada: El riesgo de canibalización y dilución se mantuvo dentro de parámetros aceptables de la industria.");
+      }
+    }
+    else if (room.round === 5) {
+      const health = sub.decisions['brand_health'];
+      const adModel = sub.decisions['ad_model'];
+      const kpis = sub.decisions['kpis'];
+      const resp = sub.decisions['responsibility'];
+      if (health === 'revitalize' && adModel === 'keller' && kpis === 'consideration') {
+        multiplier *= 1.25;
+        feedback.push("🌟 Revitalización Estratégica: Combinar el modelo CBBE de Keller con KPIs de consideración y preferencia crea un proceso de revitalización riguroso y medible.");
+      } else if (health === 'reinforce' && kpis === 'awareness' && resp === 'compliance') {
+        multiplier *= 0.82;
+        feedback.push("⚠️ Gestión Defensiva: Reforzar una marca sin actualizar sus KPIs más allá del awareness básico, apoyándose solo en cumplimiento normativo, genera estancamiento competitivo.");
+      } else if (health === 'retire' && resp === 'transparency') {
+        multiplier *= 1.12;
+        feedback.push("✅ Racionalización Honesta: Retirar una marca con transparencia hacia el mercado preserva la reputación corporativa y redirige recursos a marcas con mayor potencial.");
+      } else if (adModel === 'keller' && resp === 'sustainability') {
+        multiplier *= 1.18;
+        feedback.push("🌟 Marca Responsable: El modelo CBBE junto a una sustentabilidad integrada construye el nivel más alto de la pirámide: resonancia y lealtad profunda del consumidor.");
+      } else {
+        feedback.push("✅ Gestión de efectividad estable: Los KPIs y el modelo de VCM seleccionados mantienen una trayectoria coherente con el posicionamiento actual.");
+      }
+    }
+    else if (room.round === 6) {
+      const globStrat = sub.decisions['global_strategy'];
+      const cultFit = sub.decisions['cultural_fit'];
+      const entry = sub.decisions['market_entry'];
+      if (globStrat === 'standardize' && cultFit === 'full_adapt') {
+        multiplier *= 0.65;
+        feedback.push("🚨 Contradicción Global: Declaraste estandarización total para ahorrar costos, pero ejecutaste adaptación cultural completa. Esta esquizofrenia estratégica destruyó tus márgenes operativos.");
+      } else if (globStrat === 'glocal' && cultFit === 'core_flex') {
+        multiplier *= 1.30;
+        feedback.push("🌟 Dominio Glocal: Mantener un núcleo global fuerte con flexibilidad local ('Core & Flex') maximizó tu relevancia cultural sin sacrificar economías de escala.");
+      } else if (globStrat === 'standardize' && entry === 'organic') {
+        multiplier *= 0.85;
+        feedback.push("⚠️ Entrada Débil: Imponer una marca estandarizada con crecimiento orgánico en un nuevo país es demasiado lento frente a competidores locales agresivos.");
+      } else if (globStrat === 'local_adapt' && entry === 'acquisition') {
+        multiplier *= 1.18;
+        feedback.push("✅ Adaptación Acelerada: Adquirir una marca local y adaptarla completamente reduce el tiempo de entrada al mercado y aprovecha el conocimiento cultural existente.");
+      } else {
+        feedback.push("✅ Expansión estable: La estrategia internacional logró un equilibrio decente entre adaptación y estandarización.");
       }
     }
 
-    scores[bid] = score;
+    // 3. Estrategia multiplicadora
+    const strat = topic.strategies.find(s=>s.id===sub.strategy);
+    if(strat) {
+      score *= strat.multiplier;
+      feedback.push(`📈 Estrategia táctica ejecutada: ${strat.name} (×${strat.multiplier.toFixed(2)}).`);
+    }
+
+    // 4. Eventos
+    if(room.event) {
+      if(sub.decisions[room.event.lever]) {
+        if(room.event.bonus) { score *= room.event.bonus; feedback.push(`⚡ Evento de mercado: tu decisión en la palanca clave te benefició (×${room.event.bonus}).`); }
+      } else if(room.event.penalty) {
+        score *= room.event.penalty;
+        feedback.push(`⚡ Evento de mercado: no cubriste la palanca crítica y absorbiste el impacto negativo (×${room.event.penalty}).`);
+      }
+    }
+
+    scores[bid] = score * multiplier;
+    feedbackMap[bid] = feedback;
   });
 
-  // Max possible score per round (rough ceiling)
-  const maxScore = 18 * topic.levers.length * 1.28;
+  const maxScore = 18 * topic.levers.length * 1.28 * 1.30;
 
   room.brands.forEach(bid => {
     const raw = scores[bid] || 0;
     const normalized = (raw / maxScore) * 100;
-    // Delta: +/- up to 20 points from 50 baseline, blended with history
-    const delta = (normalized - 50) * 0.3;
+    const delta = (normalized - 50) * 0.35;
     const prev = newEquity[bid] || INITIAL_EQUITY;
     newEquity[bid] = Math.max(5, Math.min(100, prev + delta));
   });
 
-  // Save history
   room.history = room.history || [];
   room.history.push({
     round: room.round,
     equity: {...newEquity},
     submissions: {...room.submissions},
+    feedback: feedbackMap,
     event: room.event,
   });
 
@@ -1294,7 +1418,7 @@ async function advanceRound() {
   room.event = EVENTS[Math.floor(Math.random()*EVENTS.length)];
   await saveRoom(state.roomCode, room);
   renderGame(room);
-  showToast('📊 ¡VCM calculado!');
+  showToast('📊 ¡VCM y Coherencia Estratégica calculados!');
 }
 
 // ══════════════════════════════════════════
@@ -1304,6 +1428,7 @@ function renderResults(room) {
   const lastHistory = room.history[room.history.length-1];
   const prevEquity = room.history.length>1 ? (room.history[room.history.length-2]?.equity || {}) : {};
   const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
+  const myFeedback = (state.role === 'student' && lastHistory?.feedback) ? lastHistory.feedback[state.brandId] : null;
 
   const sorted = [...(room.brands||[])].sort((a,b)=>(room.equity[b]||0)-(room.equity[a]||0));
   if(sorted.length === 0) {
@@ -1340,6 +1465,16 @@ function renderResults(room) {
         <div class="ev-text">${room.event.text}</div>
         <div class="ev-effect">${room.event.effect}</div>
       </div>
+    </div>` : ''}
+
+    ${myFeedback ? `
+    <div style="background:#fff;border-left:4px solid var(--orange);border-radius:8px;padding:16px 20px;margin-bottom:24px;box-shadow:0 4px 12px rgba(232,89,10,.08);">
+      <h3 style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        <span>📋</span> Reporte del Directorio
+      </h3>
+      <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:var(--gray);line-height:1.6;">
+        ${myFeedback.map(item => `<li style="margin-bottom:8px;">${item}</li>`).join('')}
+      </ul>
     </div>` : ''}
 
     <div class="results-grid">
@@ -1398,10 +1533,11 @@ function renderResults(room) {
     state.strategy = null;
   }
 
-  // Generate AI analysis
 }
 
-
+// ══════════════════════════════════════════
+// AI ANALYSIS (Anthropic API)
+// ══════════════════════════════════════════
 
 // ══════════════════════════════════════════
 // NEXT / END / INJECT
@@ -1439,10 +1575,10 @@ async function confirmReset() {
   if(!confirm('¿Seguro que quieres reiniciar la sala? Se borrarán todos los datos.')) return;
   const curRoom = await loadRoom(state.roomCode);
   const totalRounds = curRoom?.totalRounds || TOTAL_ROUNDS;
-  const room = initRoomData(BRANDS.map(b=>b.id), totalRounds);
+  const room = initRoomData([], totalRounds);  // sala vacía: alumnos se reconectan
   await saveRoom(state.roomCode, room);
   renderGame(room);
-  showToast('🔄 Sala reiniciada');
+  showToast('🔄 Sala reiniciada — alumnos deben reconectarse');
 }
 
 // ══════════════════════════════════════════
