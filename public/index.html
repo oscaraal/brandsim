@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrandSim — Administración de Marca · UDLAP</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #E8590A;
+  --green: #0A5C36;
+  --aqua: #007A6E;
+  --bg: #f5f7f5;
+  --cream: #f0f3f1;
+  --dark: #1a1a1a;
+  --gray: #6b7280;
+  --light-border: #e0e8e3;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+
+/* ── MASTHEAD ── */
+.masthead {
+  height: 64px; background: #fff;
+  border-bottom: 2px solid var(--orange);
+  display: flex; align-items: center; padding: 0 28px; gap: 0;
+  position: sticky; top: 0; z-index: 100;
+}
+.masthead-logo { height: 36px; }
+.masthead-sep { width: 1px; background: #ccc; height: 36px; margin: 0 20px; }
+.masthead-school { flex: 1; }
+.masthead-school .line1 { font-size: 11px; font-weight: 800; color: var(--dark); letter-spacing: .04em; text-transform: uppercase; }
+.masthead-school .line2 { font-size: 10px; font-weight: 600; color: var(--gray); letter-spacing: .03em; }
+.masthead-tool { border-right: 1px solid var(--light-border); padding-right: 24px; margin-right: 20px; text-align: right; }
+.masthead-tool .eyebrow { font-size: 9px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .08em; }
+.masthead-tool .name { font-size: 13px; font-weight: 900; color: var(--green); }
+.masthead-badge { background: var(--orange); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: .04em; text-transform: uppercase; }
+
+/* ── SCREENS ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── LOBBY ── */
+.lobby-wrap { max-width: 700px; margin: 60px auto; padding: 0 20px; }
+.lobby-card { background: #fff; border-radius: 16px; border: 1px solid var(--light-border); overflow: hidden; }
+.lobby-hero {
+  background: linear-gradient(135deg, var(--green) 0%, #0d7a4a 60%, var(--aqua) 100%);
+  padding: 48px 40px 36px; color: #fff; position: relative; overflow: hidden;
+}
+.lobby-hero::before { content:''; position:absolute; right:-40px; top:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,.06); }
+.lobby-hero::after { content:''; position:absolute; right:40px; bottom:-60px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,.04); }
+.lobby-hero .brand-icon { font-size: 48px; margin-bottom: 16px; }
+.lobby-hero h1 { font-size: 30px; font-weight: 900; letter-spacing: -.01em; line-height: 1.1; }
+.lobby-hero h1 span { color: #ffb380; }
+.lobby-hero p { margin-top: 10px; font-size: 14px; opacity: .85; line-height: 1.5; }
+
+.lobby-body { padding: 36px 40px; }
+.lobby-body h2 { font-size: 13px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 20px; }
+
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+.role-card { border: 2px solid var(--light-border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all .2s; text-align: center; }
+.role-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,89,10,.12); }
+.role-card.selected { border-color: var(--orange); background: #fff5f0; }
+.role-card .role-icon { font-size: 28px; margin-bottom: 8px; }
+.role-card .role-name { font-size: 13px; font-weight: 800; color: var(--dark); }
+.role-card .role-desc { font-size: 11px; color: var(--gray); margin-top: 4px; line-height: 1.4; }
+
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.input-group input, .input-group select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--light-border); border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: var(--dark); background: var(--bg); transition: border-color .2s; }
+.input-group input:focus, .input-group select:focus { outline: none; border-color: var(--orange); }
+
+.brand-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.brand-btn { padding: 10px 8px; border: 2px solid var(--light-border); border-radius: 8px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; background: #fff; transition: all .2s; text-align: center; }
+.brand-btn:hover { transform: translateY(-1px); }
+.brand-btn.taken { opacity: .4; cursor: not-allowed; pointer-events: none; }
+.brand-btn.selected { color: #fff !important; border-color: transparent; }
+
+.btn-primary { width: 100%; padding: 14px; background: var(--orange); color: #fff; border: none; border-radius: 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; letter-spacing: .02em; transition: all .2s; margin-top: 8px; }
+.btn-primary:hover { background: #c94a08; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,89,10,.3); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary { padding: 8px 18px; background: transparent; color: var(--green); border: 1.5px solid var(--green); border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; }
+.btn-secondary:hover { background: var(--green); color: #fff; }
+
+/* ── GAME LAYOUT ── */
+.game-wrap { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 64px); }
+
+/* SIDEBAR */
+.sidebar { background: var(--green); color: #fff; padding: 24px 20px; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; }
+.sidebar-round { background: rgba(255,255,255,.1); border-radius: 10px; padding: 16px; margin-bottom: 20px; text-align: center; }
+.sidebar-round .round-label { font-size: 10px; font-weight: 600; opacity: .7; text-transform: uppercase; letter-spacing: .08em; }
+.sidebar-round .round-num { font-size: 40px; font-weight: 900; line-height: 1; }
+.sidebar-round .round-topic { font-size: 10px; opacity: .7; margin-top: 4px; line-height: 1.3; }
+
+.sidebar-brand { background: rgba(255,255,255,.08); border-radius: 10px; padding: 14px; margin-bottom: 16px; border-left: 3px solid var(--orange); }
+.sidebar-brand .b-label { font-size: 9px; font-weight: 600; opacity: .6; text-transform: uppercase; letter-spacing: .08em; }
+.sidebar-brand .b-name { font-size: 15px; font-weight: 900; margin-top: 2px; }
+.sidebar-brand .b-equity { margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #7fffd4; }
+.sidebar-brand .equity-label { font-size: 10px; opacity: .6; margin-top: 2px; }
+
+.sidebar-ranking h3 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin-bottom: 10px; }
+.rank-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; background: rgba(255,255,255,.06); }
+.rank-item.me { background: rgba(232,89,10,.25); }
+.rank-item .rank-pos { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; opacity: .6; width: 18px; }
+.rank-item .rank-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.rank-item .rank-name { font-size: 11px; font-weight: 700; flex: 1; }
+.rank-item .rank-equity { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: #7fffd4; }
+
+/* MAIN AREA */
+.main-area { padding: 32px; }
+
+.phase-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+.phase-header h2 { font-size: 22px; font-weight: 900; color: var(--dark); }
+.phase-header .phase-sub { font-size: 13px; color: var(--gray); margin-top: 2px; }
+.round-status { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--gray); background: var(--cream); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--light-border); white-space: nowrap; }
+.round-status .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* TOPIC BANNER */
+.topic-banner {
+  background: linear-gradient(135deg, var(--green), var(--aqua));
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; color: #fff;
+  display: flex; align-items: center; gap: 16px;
+}
+.topic-banner .tb-icon { font-size: 32px; flex-shrink: 0; }
+.topic-banner .tb-num { font-size: 10px; font-weight: 700; opacity: .7; text-transform: uppercase; letter-spacing: .08em; }
+.topic-banner .tb-title { font-size: 16px; font-weight: 900; margin-top: 2px; }
+.topic-banner .tb-sub { font-size: 12px; opacity: .8; margin-top: 4px; line-height: 1.4; }
+
+/* DECISION CARDS (brand levers) */
+.levers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+.lever-card { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 18px 20px; transition: all .2s; }
+.lever-card:hover { border-color: var(--orange); box-shadow: 0 4px 16px rgba(232,89,10,.08); }
+.lever-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.lever-icon { font-size: 22px; }
+.lever-name { font-size: 13px; font-weight: 800; color: var(--dark); }
+.lever-desc { font-size: 10px; color: var(--gray); margin-top: 1px; line-height: 1.4; }
+.lever-options { display: flex; flex-direction: column; gap: 6px; }
+.lever-opt { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1.5px solid var(--light-border); border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 12px; font-weight: 600; color: var(--dark); }
+.lever-opt:hover { border-color: var(--aqua); background: #f0faf9; }
+.lever-opt.selected { border-color: var(--orange); background: #fff5f0; color: var(--orange); }
+.lever-opt .opt-dot { width: 8px; height: 8px; border-radius: 50%; border: 2px solid #ccc; flex-shrink: 0; transition: all .2s; }
+.lever-opt.selected .opt-dot { background: var(--orange); border-color: var(--orange); }
+.lever-opt .opt-effect { font-size: 10px; color: var(--gray); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+.lever-opt.selected .opt-effect { color: var(--orange); }
+
+/* STRATEGY */
+.strat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.strat-card { background: #fff; border: 1.5px solid var(--light-border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all .2s; text-align: center; }
+.strat-card:hover { border-color: var(--aqua); }
+.strat-card.selected { border-color: var(--aqua); background: #f0faf9; }
+.strat-card .sc-icon { font-size: 24px; margin-bottom: 6px; }
+.strat-card .sc-name { font-size: 11px; font-weight: 800; color: var(--dark); }
+.strat-card .sc-desc { font-size: 10px; color: var(--gray); margin-top: 3px; line-height: 1.4; }
+
+.submit-row { display: flex; gap: 12px; align-items: center; }
+.submit-btn { flex: 1; padding: 14px; background: var(--green); color: #fff; border: none; border-radius: 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: all .2s; }
+.submit-btn:hover { background: #0d7a4a; transform: translateY(-1px); }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* WAITING */
+.waiting-wrap { max-width: 500px; margin: 80px auto; text-align: center; }
+.w-icon { font-size: 56px; margin-bottom: 20px; }
+.waiting-wrap h2 { font-size: 22px; font-weight: 900; margin-bottom: 10px; }
+.waiting-wrap p { font-size: 14px; color: var(--gray); line-height: 1.5; }
+.waiting-brands { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 24px; }
+.wb-pill { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--light-border); font-size: 12px; font-weight: 700; color: var(--gray); }
+.wb-pill.submitted { border-color: #22c55e; color: #16a34a; background: #f0fdf4; }
+.wb-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* PROFESSOR PANEL */
+.prof-panel { background: var(--dark); border-radius: 12px; padding: 24px; margin-bottom: 24px; color: #fff; }
+.prof-panel h3 { font-size: 11px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 16px; }
+.prof-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.prof-stat { background: rgba(255,255,255,.06); border-radius: 8px; padding: 12px; text-align: center; }
+.ps-label { font-size: 10px; opacity: .6; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.ps-val { font-size: 22px; font-weight: 900; }
+.prof-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.prof-btn { padding: 10px 18px; border: none; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; }
+.prof-btn.advance { background: var(--orange); color: #fff; }
+.prof-btn.advance:hover { background: #c94a08; }
+.prof-btn.advance:disabled { opacity: .4; cursor: not-allowed; }
+.prof-btn.inject { background: var(--aqua); color: #fff; }
+.prof-btn.inject:hover { background: #006058; }
+.prof-btn.reset { background: rgba(255,255,255,.1); color: #fff; }
+.prof-btn.reset:hover { background: rgba(255,255,255,.2); }
+
+/* RESULTS */
+.results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.result-card { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 20px; text-align: center; transition: all .2s; }
+.result-card.winner { border-color: #fbbf24; background: #fffbeb; }
+.rc-brand { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; }
+.rc-name { font-size: 16px; margin: 6px 0; }
+.rc-equity { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: var(--green); line-height: 1; }
+.rc-equity span { font-size: 14px; }
+.rc-change { font-size: 12px; font-weight: 700; margin-top: 6px; }
+.rc-change.up { color: #16a34a; }
+.rc-change.down { color: #dc2626; }
+
+/* BAR CHART */
+.chart-wrap { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.chart-wrap h3 { font-size: 12px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 16px; }
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.br-label { font-size: 12px; font-weight: 700; width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.br-track { flex: 1; height: 28px; background: var(--cream); border-radius: 6px; overflow: hidden; }
+.br-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.br-fill span { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; }
+.br-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; width: 40px; text-align: right; }
+
+/* EVENT CARD */
+.event-card { background: linear-gradient(135deg, #7c3aed, #4f46e5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; color: #fff; display: flex; align-items: flex-start; gap: 16px; }
+.ev-icon { font-size: 28px; flex-shrink: 0; }
+.ev-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .8; }
+.ev-text { font-size: 15px; font-weight: 800; margin-top: 2px; }
+.ev-effect { font-size: 12px; opacity: .85; margin-top: 4px; line-height: 1.4; }
+
+/* GAME OVER */
+.go-wrap { max-width: 680px; margin: 60px auto; padding: 0 20px; }
+.go-card { background: #fff; border-radius: 16px; border: 1px solid var(--light-border); overflow: hidden; }
+.go-hero { background: linear-gradient(135deg, #7c3aed, #4f46e5); padding: 48px 40px; color: #fff; text-align: center; }
+.go-hero .trophy { font-size: 64px; margin-bottom: 16px; }
+.go-hero h1 { font-size: 28px; font-weight: 900; }
+.go-hero p { margin-top: 8px; opacity: .85; font-size: 14px; }
+.go-body { padding: 36px 40px; }
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; margin-bottom: 32px; }
+.podium-item { text-align: center; background: var(--cream); border-radius: 12px; padding: 20px 16px; }
+.podium-item.first { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; transform: scale(1.08); }
+.pod-pos { font-size: 24px; }
+.pod-name { font-size: 13px; font-weight: 800; margin-top: 6px; }
+.pod-equity { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--green); margin-top: 4px; }
+.podium-item.first .pod-equity { color: #fff; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 9999; transition: transform .3s; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* AI ANALYSIS BOX */
+.ai-box { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.ai-box .ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ai-box .ai-icon { font-size: 20px; }
+.ai-box .ai-title { font-size: 12px; font-weight: 800; color: var(--dark); text-transform: uppercase; letter-spacing: .06em; }
+.ai-box .ai-badge { background: var(--aqua); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.ai-box .ai-body { font-size: 13px; color: var(--gray); line-height: 1.6; font-family: 'Source Serif 4', serif; }
+.ai-box .ai-body.loading::after { content: '▋'; animation: blink .8s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.ai-loading { color: var(--aqua); font-style: italic; }
+
+/* TOPICS PROGRESS */
+.topics-progress { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
+.tp-label { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.tp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.tp-item { text-align: center; }
+.tp-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--light-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; font-size: 14px; transition: all .3s; }
+.tp-circle.done { background: var(--green); border-color: var(--green); }
+.tp-circle.active { background: var(--orange); border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,89,10,.2); }
+.tp-circle.pending { background: var(--cream); }
+.tp-name { font-size: 9px; font-weight: 600; color: var(--gray); line-height: 1.2; }
+.tp-item.active .tp-name { color: var(--orange); font-weight: 800; }
+.tp-item.done .tp-name { color: var(--green); }
+
+/* EQUITY METER */
+.equity-meter { background: #fff; border: 1.5px solid var(--light-border); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
+.em-label { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.em-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--green); }
+.em-track { height: 10px; background: var(--cream); border-radius: 5px; overflow: hidden; margin-top: 6px; }
+.em-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--green), var(--aqua)); transition: width .5s; }
+
+/* SCROLL */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <img class="masthead-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/UDLAP_logo.svg/1200px-UDLAP_logo.svg.png" alt="UDLAP"
+    onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+  <span style="display:none;font-size:15px;font-weight:900;color:var(--orange);letter-spacing:.02em">UDLAP</span>
+  <div class="masthead-sep"></div>
+  <div class="masthead-school">
+    <div class="line1">Escuela de Negocios y Economía</div>
+    <div class="line2">Dpto. Mercadotecnia</div>
+  </div>
+  <div class="masthead-tool">
+    <div class="eyebrow">Herramienta</div>
+    <div class="name">BrandSim</div>
+  </div>
+  <div class="masthead-badge">Serie Simuladores</div>
+</header>
+
+<!-- ══════ SCREEN: LOBBY ══════ -->
+<div id="screen-lobby" class="screen active">
+  <div class="lobby-wrap">
+    <div class="lobby-card">
+      <div class="lobby-hero">
+        <div class="brand-icon">🏷️</div>
+        <h1>Brand<span>Sim</span></h1>
+        <h1 style="font-size:18px;font-weight:600;margin-top:6px">Simulador de Administración de Marca</h1>
+        <p>Compite en tiempo real gestionando el Valor Capital de Marca (VCM) de tu empresa a través de 6 temas del curso: auditorías, apalancamiento, arquitectura, extensiones, efectividad y globalización.</p>
+      </div>
+      <div class="lobby-body">
+        <h2>Elige tu rol</h2>
+        <div class="role-grid">
+          <div class="role-card" id="role-student" onclick="selectRole('student')">
+            <div class="role-icon">🎓</div>
+            <div class="role-name">Alumno</div>
+            <div class="role-desc">Únete como equipo y compite en cada ronda</div>
+          </div>
+          <div class="role-card" id="role-prof" onclick="selectRole('professor')">
+            <div class="role-icon">👨‍🏫</div>
+            <div class="role-name">Profesor</div>
+            <div class="role-desc">Modera la sesión y avanza las rondas</div>
+          </div>
+        </div>
+
+        <!-- PROFESOR fields: código arriba + contraseña -->
+        <div id="prof-fields" style="display:none">
+          <div class="input-group">
+            <label>Código de Sala (para tus alumnos)</label>
+            <input type="text" id="room-code-prof" placeholder="Ej. BRAND2025" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase();checkJoinReady()">
+          </div>
+          <div class="input-group">
+            <label>Contraseña de Profesor</label>
+            <input type="password" id="prof-pass" placeholder="••••••" oninput="checkJoinReady()">
+          </div>
+        </div>
+
+        <!-- ALUMNO fields: código + nombre + empresa -->
+        <div id="student-fields">
+          <div class="input-group">
+            <label>Código de Sala</label>
+            <input type="text" id="room-code" placeholder="Ej. BRAND2025" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase();checkJoinReady()">
+          </div>
+          <div class="input-group">
+            <label>Tu nombre</label>
+            <input type="text" id="player-name" placeholder="ej. Sofía Ramírez" oninput="checkJoinReady()">
+          </div>
+          <div class="input-group">
+            <label>Elige tu empresa</label>
+            <div class="brand-selector" id="brand-selector"></div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="join-btn" onclick="joinRoom()" disabled>
+          Entrar al simulador →
+        </button>
+        <p style="font-size:11px;color:var(--gray);text-align:center;margin-top:12px;line-height:1.5">
+          ⚠️ Todos los jugadores deben usar el mismo código de sala · Los datos se sincronizan en la nube
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: GAME ══════ -->
+<div id="screen-game" class="screen">
+  <div class="game-wrap">
+    <aside class="sidebar">
+      <div class="sidebar-round">
+        <div class="round-label">Tema / Ronda</div>
+        <div class="round-num" id="sb-round">1</div>
+        <div class="round-topic" id="sb-topic">Auditoría de Marca</div>
+      </div>
+      <div class="sidebar-brand">
+        <div class="b-label">Tu empresa</div>
+        <div class="b-name" id="sb-brand-name">—</div>
+        <div class="b-equity" id="sb-equity">50.0</div>
+        <div class="equity-label">VCM (Brand Equity)</div>
+      </div>
+      <div class="sidebar-ranking">
+        <h3>Ranking de Brand Equity</h3>
+        <div id="sb-ranking"></div>
+      </div>
+    </aside>
+    <main class="main-area" id="main-area"></main>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: GAME OVER ══════ -->
+<div id="screen-gameover" class="screen">
+  <div class="go-wrap">
+    <div class="go-card">
+      <div class="go-hero">
+        <div class="trophy">🏆</div>
+        <h1>Simulación Concluida</h1>
+        <p id="go-winner">—</p>
+      </div>
+      <div class="go-body">
+        <h2 style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Podio Final — Brand Equity</h2>
+        <div class="podium" id="go-podium"></div>
+        <button class="btn-primary" onclick="restartGame()">↩ Nueva sesión</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const BRANDS = [
+  { id:'alpha',   name:'Alpha Brands',   emoji:'🔥', color:'#E8590A' },
+  { id:'beta',    name:'Beta Market',    emoji:'🌿', color:'#0A5C36' },
+  { id:'gamma',   name:'Gamma Corp',     emoji:'💎', color:'#007A6E' },
+  { id:'delta',   name:'Delta Group',    emoji:'⚡', color:'#7c3aed' },
+  { id:'epsilon', name:'Epsilon Co.',    emoji:'🚀', color:'#0284c7' },
+  { id:'zeta',    name:'Zeta Global',    emoji:'✨', color:'#be185d' },
+  { id:'eta',     name:'Eta Industries', emoji:'🛒', color:'#b45309' },
+  { id:'theta',   name:'Theta Labs',     emoji:'📱', color:'#166534' },
+];
+
+const TOPICS = [
+  {
+    num: 1,
+    icon: '🔍',
+    title: 'Auditorías a la Marca',
+    subtitle: 'Elementos, criterios y programas de mercadotecnia para construir VCM',
+    subtopics: ['1.1 Elementos de la marca', '1.2 Criterios de selección', '1.3 Opciones y tácticas', '1.4–1.10 Programas de Marketing y CIM'],
+    levers: [
+      {
+        id: 'brand_elements',
+        icon: '🏷️',
+        name: 'Elementos de marca',
+        desc: 'Define qué elementos prioritizar en tu auditoría',
+        options: [
+          { id: 'memorable', label: 'Memorabilidad y reconocimiento', effect: '+VCM alto', score: 18 },
+          { id: 'meaningful', label: 'Significado y relevancia cultural', effect: '+VCM medio', score: 14 },
+          { id: 'flexible', label: 'Adaptabilidad y transferibilidad', effect: '+VCM bajo', score: 10 },
+        ]
+      },
+      {
+        id: 'mkt_program',
+        icon: '📣',
+        name: 'Programa de marketing',
+        desc: 'Estrategia principal de CIM para construir VCM',
+        options: [
+          { id: 'integrated', label: 'CIM integrada multicanal', effect: '+Reach', score: 16 },
+          { id: 'content', label: 'Marketing de contenidos y SEO', effect: '+Engagement', score: 13 },
+          { id: 'events', label: 'Activaciones y experiencias', effect: '+Asociaciones', score: 11 },
+        ]
+      },
+      {
+        id: 'pricing',
+        icon: '💲',
+        name: 'Estrategia de precios',
+        desc: 'Posicionamiento de precio respecto al VCM',
+        options: [
+          { id: 'premium', label: 'Premium — refuerza imagen', effect: '+Percepción', score: 15 },
+          { id: 'value', label: 'Valor percibido equilibrado', effect: '+Volumen', score: 12 },
+          { id: 'penetration', label: 'Penetración agresiva', effect: '+Participación', score: 9 },
+        ]
+      },
+      {
+        id: 'distribution',
+        icon: '🚚',
+        name: 'Canal de distribución',
+        desc: 'Estrategia de canales para reforzar la marca',
+        options: [
+          { id: 'exclusive', label: 'Distribución exclusiva/selectiva', effect: '+Equity', score: 14 },
+          { id: 'omni', label: 'Omnicanal integrado', effect: '+Alcance', score: 13 },
+          { id: 'mass', label: 'Distribución masiva', effect: '+Volumen', score: 8 },
+        ]
+      },
+    ],
+    strategies: [
+      { id: 'audit_deep', icon: '🔬', name: 'Auditoría Profunda', desc: 'Análisis exhaustivo; multiplica impacto de decisiones de elementos', multiplier: 1.25 },
+      { id: 'quick_wins', icon: '⚡', name: 'Victorias Rápidas', desc: 'Optimización táctica; boost inmediato de VCM', multiplier: 1.18 },
+      { id: 'repositioning', icon: '🔄', name: 'Reposicionamiento', desc: 'Arriesgado pero alto retorno si hay coherencia', multiplier: 1.22 },
+    ]
+  },
+  {
+    num: 2,
+    icon: '🤝',
+    title: 'Apalancamiento de Asociaciones Secundarias',
+    subtitle: 'Marcas conjuntas, licencias, celebridades y eventos para construir VCM',
+    subtopics: ['2.1 Creación de asociaciones', '2.2 Co-branding', '2.4 Licenciamiento', '2.5 Celebridades', '2.6 Eventos', '2.7–2.8 Medición'],
+    levers: [
+      {
+        id: 'secondary_source',
+        icon: '🔗',
+        name: 'Fuente de asociación',
+        desc: 'Estrategia principal de apalancamiento secundario',
+        options: [
+          { id: 'cobranding', label: 'Co-branding estratégico', effect: '+Credibilidad', score: 17 },
+          { id: 'celebrity', label: 'Respaldo de celebridades', effect: '+Aspiracional', score: 15 },
+          { id: 'licensing', label: 'Licenciamiento de marca', effect: '+Revenue', score: 12 },
+        ]
+      },
+      {
+        id: 'event_strat',
+        icon: '🎪',
+        name: 'Estrategia de eventos',
+        desc: 'Tipo de activación para construir asociaciones',
+        options: [
+          { id: 'sports', label: 'Patrocinio deportivo global', effect: '+Visibilidad', score: 16 },
+          { id: 'cultural', label: 'Eventos culturales y arte', effect: '+Significado', score: 13 },
+          { id: 'community', label: 'Eventos comunitarios locales', effect: '+Lealtad', score: 10 },
+        ]
+      },
+      {
+        id: 'measurement',
+        icon: '📊',
+        name: 'Sistema de medición VCM',
+        desc: 'Metodología para medir resultados de VCM',
+        options: [
+          { id: 'brand_tracking', label: 'Brand tracking continuo', effect: '+Control', score: 15 },
+          { id: 'customer_cbe', label: 'Modelo CBBE (Keller)', effect: '+Profundidad', score: 14 },
+          { id: 'financial', label: 'Valuación financiera de marca', effect: '+ROI', score: 11 },
+        ]
+      },
+      {
+        id: 'celebrity_fit',
+        icon: '🌟',
+        name: 'Criterio de selección de embajador',
+        desc: 'Factor decisivo para elegir representante de marca',
+        options: [
+          { id: 'relevance', label: 'Congruencia con valores de marca', effect: '+Autenticidad', score: 18 },
+          { id: 'reach', label: 'Alcance masivo de audiencia', effect: '+Exposición', score: 13 },
+          { id: 'controversy', label: 'Figura provocadora/disruptiva', effect: '+Buzz, ±Riesgo', score: 10 },
+        ]
+      },
+    ],
+    strategies: [
+      { id: 'alliance', icon: '🤝', name: 'Alianza Estratégica', desc: 'Co-branding con marca complementaria de alto valor', multiplier: 1.24 },
+      { id: 'celebrity_full', icon: '⭐', name: 'Campaña de Celebridad', desc: 'Inversión total en embajador de alto perfil', multiplier: 1.20 },
+      { id: 'community_build', icon: '🌱', name: 'Construcción Comunitaria', desc: 'Enfoque grassroots; menor alcance, mayor lealtad', multiplier: 1.15 },
+    ]
+  },
+  {
+    num: 3,
+    icon: '🏗️',
+    title: 'Diseño e Implementación del Desarrollo de Marca',
+    subtitle: 'Arquitectura, jerarquía, nuevos productos y marketing de causas',
+    subtopics: ['3.1 Arquitectura', '3.2 Jerarquía de marcas', '3.3 Estrategias de desarrollo', '3.4 Marketing de causas'],
+    levers: [
+      {
+        id: 'architecture',
+        icon: '🏛️',
+        name: 'Arquitectura de marca',
+        desc: 'Estructura del portafolio de marcas',
+        options: [
+          { id: 'branded_house', label: 'Branded House (marca única)', effect: '+Coherencia', score: 16 },
+          { id: 'house_brands', label: 'House of Brands (marcas ind.)', effect: '+Flexibilidad', score: 14 },
+          { id: 'hybrid', label: 'Arquitectura híbrida', effect: '+Equilibrio', score: 13 },
+        ]
+      },
+      {
+        id: 'hierarchy',
+        icon: '📐',
+        name: 'Jerarquía de marcas',
+        desc: 'Nivel de la jerarquía a reforzar',
+        options: [
+          { id: 'corporate', label: 'Marca corporativa global', effect: '+Paraguas', score: 15 },
+          { id: 'product', label: 'Marcas de producto específicas', effect: '+Diferenciación', score: 14 },
+          { id: 'ingredient', label: 'Marca de ingrediente/componente', effect: '+Calidad percibida', score: 12 },
+        ]
+      },
+      {
+        id: 'new_products',
+        icon: '🆕',
+        name: 'Desarrollo de nuevos productos',
+        desc: 'Relación del nuevo producto con la marca madre',
+        options: [
+          { id: 'line_ext', label: 'Extensión de línea (mismo segmento)', effect: '+Seguridad', score: 13 },
+          { id: 'brand_ext', label: 'Extensión de marca (nuevo seg.)', effect: '+Crecimiento', score: 16 },
+          { id: 'new_brand', label: 'Nueva marca independiente', effect: '+Innovación', score: 14 },
+        ]
+      },
+      {
+        id: 'cause',
+        icon: '❤️',
+        name: 'Marketing de causas',
+        desc: 'Vinculación de la marca con propósito social',
+        options: [
+          { id: 'environmental', label: 'Causa ambiental/sustentabilidad', effect: '+Reputación', score: 17 },
+          { id: 'social', label: 'Causa social y equidad', effect: '+Identificación', score: 15 },
+          { id: 'no_cause', label: 'Sin causa (enfoque funcional)', effect: '+Neutralidad', score: 8 },
+        ]
+      },
+    ],
+    strategies: [
+      { id: 'architect', icon: '🏗️', name: 'Rediseño Arquitectónico', desc: 'Reestructura profunda del portafolio', multiplier: 1.26 },
+      { id: 'purpose', icon: '💡', name: 'Marca con Propósito', desc: 'Brand purpose como motor de crecimiento', multiplier: 1.22 },
+      { id: 'portfolio_opt', icon: '📋', name: 'Optimización de Portafolio', desc: 'Racionalizar y fortalecer marcas clave', multiplier: 1.18 },
+    ]
+  },
+  {
+    num: 4,
+    icon: '🚀',
+    title: 'Introducción de Nuevos Productos y Extensiones',
+    subtitle: 'Ventajas, desventajas, evaluación del consumidor y oportunidades de extensión',
+    subtopics: ['4.1 Nuevos productos', '4.2 Ventajas/desventajas de extensiones', '4.3 Evaluación del consumidor', '4.4 Oportunidades de extensión'],
+    levers: [
+      {
+        id: 'extension_type',
+        icon: '🌿',
+        name: 'Tipo de extensión',
+        desc: 'Estrategia de extensión de marca a implementar',
+        options: [
+          { id: 'line', label: 'Extensión de línea (sabores/tamaños)', effect: '+Bajo riesgo', score: 12 },
+          { id: 'category', label: 'Extensión de categoría', effect: '+Alto potencial', score: 17 },
+          { id: 'stretch', label: 'Extensión de estiramiento lejano', effect: '+Innovación/Riesgo', score: 14 },
+        ]
+      },
+      {
+        id: 'consumer_eval',
+        icon: '🧠',
+        name: 'Evaluación del consumidor',
+        desc: 'Criterio principal de aceptación del consumidor',
+        options: [
+          { id: 'fit', label: 'Ajuste percibido marca–extensión', effect: '+Adopción', score: 18 },
+          { id: 'quality', label: 'Transferencia de calidad percibida', effect: '+Confianza', score: 15 },
+          { id: 'novelty', label: 'Novedad y curiosidad', effect: '+Trial', score: 11 },
+        ]
+      },
+      {
+        id: 'cannibalization',
+        icon: '⚠️',
+        name: 'Gestión de canibalización',
+        desc: 'Estrategia para proteger marcas existentes',
+        options: [
+          { id: 'differentiate', label: 'Clara diferenciación de posición', effect: '+Protección', score: 16 },
+          { id: 'segment', label: 'Segmentación de mercado precisa', effect: '+Coexistencia', score: 14 },
+          { id: 'accept', label: 'Canibalización aceptada/planificada', effect: '+Crecimiento neto', score: 12 },
+        ]
+      },
+      {
+        id: 'opportunity',
+        icon: '🎯',
+        name: 'Evaluación de oportunidades',
+        desc: 'Marco para identificar extensiones viables',
+        options: [
+          { id: 'consumer_insight', label: 'Consumer insight y etnografía', effect: '+Relevancia', score: 17 },
+          { id: 'competitive', label: 'Análisis competitivo de brechas', effect: '+Posición', score: 14 },
+          { id: 'trend', label: 'Tendencias de mercado y futurismo', effect: '+Anticipación', score: 12 },
+        ]
+      },
+    ],
+    strategies: [
+      { id: 'safe_ext', icon: '🛡️', name: 'Extensión Conservadora', desc: 'Bajo riesgo, alta probabilidad de éxito moderado', multiplier: 1.16 },
+      { id: 'bold_ext', icon: '⚡', name: 'Extensión Audaz', desc: 'Alto riesgo, alto potencial de equity si hay fit', multiplier: 1.28 },
+      { id: 'test_learn', icon: '🔬', name: 'Test & Learn', desc: 'Lanzamiento piloto para validar antes de escalar', multiplier: 1.20 },
+    ]
+  },
+  {
+    num: 5,
+    icon: '📈',
+    title: 'Administración y Efectividad Publicitaria',
+    subtitle: 'Reforzamiento, revitalización, KPIs y modelo de VCM',
+    subtopics: ['5.1 Reforzamiento y revitalización', '5.2 Ajustes al portafolio', '5.3 KPIs de publicidad', '5.4 Responsabilidad de marca', '5.5 Modelo de VCM'],
+    levers: [
+      {
+        id: 'brand_health',
+        icon: '💊',
+        name: 'Salud de marca',
+        desc: 'Acción prioritaria sobre el estado de la marca',
+        options: [
+          { id: 'reinforce', label: 'Reforzar posicionamiento actual', effect: '+Consistencia', score: 14 },
+          { id: 'revitalize', label: 'Revitalizar marca desgastada', effect: '+Relevancia', score: 17 },
+          { id: 'retire', label: 'Retirar y consolidar portafolio', effect: '+Eficiencia', score: 10 },
+        ]
+      },
+      {
+        id: 'kpis',
+        icon: '📊',
+        name: 'KPIs de efectividad',
+        desc: 'Indicadores clave a priorizar en la campaña',
+        options: [
+          { id: 'awareness', label: 'Brand awareness y top-of-mind', effect: '+Memoria', score: 13 },
+          { id: 'consideration', label: 'Consideración y preferencia', effect: '+Conversión', score: 16 },
+          { id: 'loyalty', label: 'Lealtad y NPS', effect: '+Retención', score: 15 },
+        ]
+      },
+      {
+        id: 'ad_model',
+        icon: '🧩',
+        name: 'Modelo de VCM aplicado',
+        desc: 'Marco teórico para guiar decisiones de marca',
+        options: [
+          { id: 'keller', label: 'CBBE de Keller (pirámide)', effect: '+Holístico', score: 17 },
+          { id: 'aaker', label: 'Modelo de Aaker (activos)', effect: '+Financiero', score: 15 },
+          { id: 'bav', label: 'BrandAsset Valuator (Y&R)', effect: '+Diagnóstico', score: 13 },
+        ]
+      },
+      {
+        id: 'responsibility',
+        icon: '⚖️',
+        name: 'Responsabilidad de marca',
+        desc: 'Enfoque de responsabilidad social y ética',
+        options: [
+          { id: 'transparency', label: 'Transparencia y autenticidad', effect: '+Confianza', score: 18 },
+          { id: 'sustainability', label: 'Sustentabilidad integrada', effect: '+Reputación', score: 16 },
+          { id: 'compliance', label: 'Cumplimiento normativo básico', effect: '+Seguridad', score: 9 },
+        ]
+      },
+    ],
+    strategies: [
+      { id: 'revitalization', icon: '🔄', name: 'Campaña de Revitalización', desc: 'Inversión total en reposicionar marca envejecida', multiplier: 1.25 },
+      { id: 'consistency', icon: '🎯', name: 'Consistencia Estratégica', desc: 'Mantener y reforzar activos actuales de marca', multiplier: 1.18 },
+      { id: 'data_driven', icon: '📡', name: 'Optimización con Datos', desc: 'Decisiones basadas en brand tracking y analytics', multiplier: 1.22 },
+    ]
+  },
+  {
+    num: 6,
+    icon: '🌍',
+    title: 'Marcas a través de Fronteras y Segmentos',
+    subtitle: 'Internacionalización, globalización, estandarización, adaptación y VCM global',
+    subtopics: ['6.1 Internacionalización', '6.2 Ventajas/desventajas globales', '6.3 Estandarización vs adaptación', '6.4 Estrategia global', '6.5 VCM global basado en cliente'],
+    levers: [
+      {
+        id: 'global_strategy',
+        icon: '🌐',
+        name: 'Estrategia global de marca',
+        desc: 'Enfoque para mercados internacionales',
+        options: [
+          { id: 'standardize', label: 'Estandarización global total', effect: '+Eficiencia', score: 13 },
+          { id: 'glocal', label: 'Glocal (global + local)', effect: '+Relevancia', score: 18 },
+          { id: 'local_adapt', label: 'Adaptación local completa', effect: '+Penetración', score: 14 },
+        ]
+      },
+      {
+        id: 'market_entry',
+        icon: '🚪',
+        name: 'Modo de entrada a mercados',
+        desc: 'Estrategia de entrada a nuevos países',
+        options: [
+          { id: 'acquisition', label: 'Adquisición de marca local', effect: '+Velocidad', score: 16 },
+          { id: 'joint_venture', label: 'Joint venture con socio local', effect: '+Conocimiento', score: 14 },
+          { id: 'organic', label: 'Construcción orgánica de marca', effect: '+Control', score: 12 },
+        ]
+      },
+      {
+        id: 'cultural_fit',
+        icon: '🎭',
+        name: 'Gestión cultural',
+        desc: 'Adaptación de elementos de marca a la cultura',
+        options: [
+          { id: 'full_adapt', label: 'Adaptación total de comunicación', effect: '+Resonancia', score: 17 },
+          { id: 'core_flex', label: 'Núcleo global, periferia local', effect: '+Consistencia', score: 15 },
+          { id: 'universal', label: 'Mensaje universal sin adaptación', effect: '+Escala', score: 10 },
+        ]
+      },
+      {
+        id: 'global_vcm',
+        icon: '💎',
+        name: 'Construcción de VCM global',
+        desc: 'Palanca principal para VCM basado en el cliente global',
+        options: [
+          { id: 'brand_meaning', label: 'Significado de marca global coherente', effect: '+VCM holístico', score: 18 },
+          { id: 'local_resonance', label: 'Resonancia emocional local', effect: '+Profundidad', score: 16 },
+          { id: 'digital_first', label: 'Digital-first para mercados emergentes', effect: '+Alcance', score: 14 },
+        ]
+      },
+    ],
+    strategies: [
+      { id: 'global_push', icon: '🌏', name: 'Expansión Global Total', desc: 'Inversión masiva en todos los mercados simultáneamente', multiplier: 1.22 },
+      { id: 'sequential', icon: '🗺️', name: 'Expansión Secuencial', desc: 'Mercados prioritarios primero; eficiencia de recursos', multiplier: 1.19 },
+      { id: 'glocal_master', icon: '🌐', name: 'Maestro Glocal', desc: 'Máxima adaptación local con marca global coherente', multiplier: 1.27 },
+    ]
+  },
+];
+
+const EVENTS = [
+  { icon:'📰', text:'Escándalo mediático viral', effect:'La marca que no actualizó su reputación pierde 8 puntos de equity.', lever:'responsibility', penalty:0.88 },
+  { icon:'🌿', text:'Boom de consumo sustentable', effect:'Marcas con causa ambiental ganan +15% de equity esta ronda.', lever:'cause', bonus:1.15 },
+  { icon:'📱', text:'Viral en redes sociales', effect:'Marcas con CIM digital multiplican su alcance × 1.2.', lever:'mkt_program', bonus:1.20 },
+  { icon:'🏆', text:'Ranking de marcas más valiosas', effect:'Modelos de medición sólidos reciben +10% de credibilidad.', lever:'measurement', bonus:1.10 },
+  { icon:'🤝', text:'Fusión competitiva inesperada', effect:'Marcas con arquitectura híbrida absorben +12% de cuota.', lever:'architecture', bonus:1.12 },
+  { icon:'🌍', text:'Crisis de reputación global', effect:'Marcas con transparencia como prioridad mitigan el impacto.', lever:'global_vcm', penalty:0.90 },
+  { icon:'🚀', text:'Lanzamiento de producto disruptivo', effect:'Extensiones de categoría bien ejecutadas capturan + equity.', lever:'extension_type', bonus:1.18 },
+  { icon:'⭐', text:'Celebridad abandona contrato', effect:'Marcas con congruencia de valores mantienen su equity.', lever:'celebrity_fit', penalty:0.85 },
+];
+
+const PROF_PASSWORD = 'udlap2025';
+const REFRESH_INTERVAL = 5000;
+const INITIAL_EQUITY = 50;
+const TOTAL_ROUNDS = 6;
+
+// ── STATE ──
+let state = {
+  role: null, roomCode: null, playerName: null, brandId: null,
+  decisions: {}, strategy: null, submitted: false, pollTimer: null
+};
+let selectedRole = null;
+let selectedBrand = null;
+
+// ══════════════════════════════════════════
+// STORAGE — REST API (igual que MarketingWar)
+// ══════════════════════════════════════════
+const API = '';
+
+async function saveRoom(code, data) {
+  try {
+    await fetch(`${API}/api/room/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return true;
+  } catch(e) { console.error('Save error:', e); return false; }
+}
+
+async function loadRoom(code) {
+  try {
+    const res = await fetch(`${API}/api/room/${code}`);
+    if(!res.ok) return null;
+    return await res.json();
+  } catch(e) { return null; }
+}
+
+function initRoomData(brands, totalRounds) {
+  const equity = {};
+  brands.forEach(b => equity[b] = INITIAL_EQUITY);
+  return {
+    brands, totalRounds: totalRounds || TOTAL_ROUNDS,
+    round: 1, phase: 'deciding',
+    equity, history: [],
+    submissions: {},
+    event: null,
+  };
+}
+
+// ══════════════════════════════════════════
+// LOBBY
+// ══════════════════════════════════════════
+function renderBrandSelector(takenBrands=[]) {
+  const wrap = document.getElementById('brand-selector');
+  wrap.innerHTML = BRANDS.map(b => {
+    const isTaken = takenBrands.includes(b.id) && b.id !== selectedBrand;
+    const isSel = selectedBrand === b.id;
+    return `<button class="brand-btn ${isTaken?'taken':''} ${isSel?'selected':''}"
+      style="${isSel ? `background:${b.color};border-color:${b.color}` : `border-color:${b.color}40;color:${b.color}`}"
+      onclick="selectBrand('${b.id}','${b.color}','${isTaken}')">
+      ${b.emoji} ${b.name.split(' ')[0]}
+    </button>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderBrandSelector();
+});
+
+function selectRole(r) {
+  selectedRole = r;
+  document.getElementById('role-student').classList.toggle('selected', r==='student');
+  document.getElementById('role-prof').classList.toggle('selected', r==='professor');
+  document.getElementById('student-fields').style.display = r==='student' ? 'block' : 'none';
+  document.getElementById('prof-fields').style.display = r==='professor' ? 'block' : 'none';
+  checkJoinReady();
+}
+
+function selectBrand(id, color, taken) {
+  if(taken==='true') return;
+  selectedBrand = id;
+  renderBrandSelector();
+  checkJoinReady();
+}
+
+function checkJoinReady() {
+  const btn = document.getElementById('join-btn');
+  if(selectedRole === 'professor') {
+    const code = document.getElementById('room-code-prof').value.trim();
+    const pass = document.getElementById('prof-pass').value.trim();
+    btn.disabled = !code || !pass;
+  } else if(selectedRole === 'student') {
+    const code = document.getElementById('room-code').value.trim();
+    const name = document.getElementById('player-name').value.trim();
+    btn.disabled = !code || !name || !selectedBrand;
+  } else {
+    btn.disabled = true;
+  }
+}
+
+async function joinRoom() {
+  const btn = document.getElementById('join-btn');
+  btn.disabled = true;
+  btn.textContent = 'Conectando...';
+
+  if(selectedRole === 'professor') {
+    const code = document.getElementById('room-code-prof').value.trim().toUpperCase();
+    const pass = document.getElementById('prof-pass').value.trim();
+    if(pass !== PROF_PASSWORD) {
+      showToast('❌ Contraseña incorrecta');
+      btn.disabled = false; btn.textContent = 'Entrar al simulador →'; return;
+    }
+    const totalRounds = TOTAL_ROUNDS;
+    state.role = 'professor'; state.roomCode = code; state.brandId = 'professor';
+    let room = await loadRoom(code);
+    if(!room) { room = initRoomData([], totalRounds); await saveRoom(code, room); }
+    enterGame();
+  } else {
+    const code = document.getElementById('room-code').value.trim().toUpperCase();
+    const name = document.getElementById('player-name').value.trim();
+    let room = await loadRoom(code);
+    if(!room) {
+      showToast('❌ Sala no encontrada. Pide al profesor que la cree primero.');
+      btn.disabled = false; btn.textContent = 'Entrar al simulador →'; return;
+    }
+    if(room.phase === 'gameover') {
+      showToast('⚠️ Esta sesión ya terminó.');
+      btn.disabled = false; btn.textContent = 'Entrar al simulador →'; return;
+    }
+    state.role = 'student'; state.roomCode = code;
+    state.playerName = name; state.brandId = selectedBrand;
+    state.decisions = {}; state.strategy = null; state.submitted = false;
+    if(!room.brands.includes(selectedBrand)) {
+      room.brands.push(selectedBrand);
+      if(!room.equity[selectedBrand]) room.equity[selectedBrand] = INITIAL_EQUITY;
+      await saveRoom(code, room);
+    }
+    enterGame();
+  }
+}
+
+function enterGame() {
+  showScreen('game');
+  startPoll();
+}
+
+// ══════════════════════════════════════════
+// POLL
+// ══════════════════════════════════════════
+function startPoll() {
+  renderGameFromServer();
+  state.pollTimer = setInterval(renderGameFromServer, REFRESH_INTERVAL);
+}
+
+async function renderGameFromServer() {
+  const room = await loadRoom(state.roomCode);
+  if(room) renderGame(room);
+}
+
+function getBrand(id) { return BRANDS.find(b=>b.id===id) || {name:id, emoji:'🏷️', color:'#999'}; }
+
+function renderGame(room) {
+  if(room.phase==='gameover') { clearInterval(state.pollTimer); renderGameOver(room); return; }
+
+  const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
+  document.getElementById('sb-round').textContent = room.round;
+  document.getElementById('sb-topic').textContent = topic.title;
+
+  const myBrand = getBrand(state.brandId);
+  document.getElementById('sb-brand-name').textContent =
+    state.role==='professor' ? '👨‍🏫 Profesor' : `${myBrand.emoji} ${myBrand.name}`;
+  document.getElementById('sb-equity').textContent =
+    state.role==='professor' ? '—' : (room.equity[state.brandId]||INITIAL_EQUITY).toFixed(1);
+
+  const sorted = [...room.brands].sort((a,b)=>(room.equity[b]||0)-(room.equity[a]||0));
+  document.getElementById('sb-ranking').innerHTML = sorted.map((bid,i) => {
+    const b = getBrand(bid);
+    const isMe = bid===state.brandId;
+    return `<div class="rank-item ${isMe?'me':''}">
+      <span class="rank-pos">#${i+1}</span>
+      <span class="rank-dot" style="background:${b.color}"></span>
+      <span class="rank-name">${b.emoji} ${b.name.split(' ')[0]}</span>
+      <span class="rank-equity">${(room.equity[bid]||INITIAL_EQUITY).toFixed(1)}</span>
+    </div>`;
+  }).join('');
+
+  if(room.phase==='deciding') {
+    if(state.role==='professor') renderProfDeciding(room);
+    else if(state.submitted) renderWaiting(room);
+    else renderDecision(room);
+  } else if(room.phase==='results') {
+    renderResults(room);
+  }
+}
+
+// ══════════════════════════════════════════
+// TOPIC PROGRESS BAR
+// ══════════════════════════════════════════
+function renderTopicsProgress(currentRound, totalRounds) {
+  const items = TOPICS.slice(0, totalRounds).map((t, i) => {
+    const round = i+1;
+    const isDone = round < currentRound;
+    const isActive = round === currentRound;
+    return `<div class="tp-item ${isDone?'done':''} ${isActive?'active':''}">
+      <div class="tp-circle ${isDone?'done':''} ${isActive?'active':''} ${(!isDone&&!isActive)?'pending':''}">
+        ${isDone?'✓':t.icon}
+      </div>
+      <div class="tp-name">T${t.num}</div>
+    </div>`;
+  }).join('');
+  return `<div class="topics-progress">
+    <div class="tp-label">Progreso del curso</div>
+    <div class="tp-grid">${items}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// DECISION PANEL
+// ══════════════════════════════════════════
+function renderDecision(room) {
+  const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
+  const total = room.totalRounds || TOTAL_ROUNDS;
+
+  document.getElementById('main-area').innerHTML = `
+    ${renderTopicsProgress(room.round, total)}
+
+    <div class="topic-banner">
+      <div class="tb-icon">${topic.icon}</div>
+      <div>
+        <div class="tb-num">Tema ${topic.num} / Ronda ${room.round}</div>
+        <div class="tb-title">${topic.title}</div>
+        <div class="tb-sub">${topic.subtitle}</div>
+      </div>
+    </div>
+
+    ${room.event ? `<div class="event-card">
+      <div class="ev-icon">${room.event.icon}</div>
+      <div>
+        <div class="ev-title">⚡ Evento activo esta ronda</div>
+        <div class="ev-text">${room.event.text}</div>
+        <div class="ev-effect">${room.event.effect}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="phase-header">
+      <div>
+        <h2>🎯 Decisiones de Marca — Ronda ${room.round}</h2>
+        <div class="phase-sub">Selecciona una opción en cada palanca de marca</div>
+      </div>
+      <div class="round-status"><div class="dot"></div> Esperando decisiones</div>
+    </div>
+
+    <div class="levers-grid" id="levers-grid">
+      ${topic.levers.map(lev => `
+        <div class="lever-card">
+          <div class="lever-header">
+            <span class="lever-icon">${lev.icon}</span>
+            <div>
+              <div class="lever-name">${lev.name}</div>
+              <div class="lever-desc">${lev.desc}</div>
+            </div>
+          </div>
+          <div class="lever-options">
+            ${lev.options.map(opt => `
+              <div class="lever-opt ${(state.decisions[lev.id]===opt.id)?'selected':''}"
+                onclick="selectLever('${lev.id}','${opt.id}')">
+                <span class="opt-dot"></span>
+                ${opt.label}
+                <span class="opt-effect">${opt.effect}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="phase-header" style="margin-bottom:16px">
+      <div>
+        <h2 style="font-size:17px">🧠 Estrategia de la ronda</h2>
+        <div class="phase-sub">Elige el enfoque estratégico que multiplica el impacto de tus decisiones</div>
+      </div>
+    </div>
+    <div class="strat-grid" id="strat-grid">
+      ${topic.strategies.map(s => `
+        <div class="strat-card ${state.strategy===s.id?'selected':''}" onclick="selectStrategy('${s.id}')">
+          <div class="sc-icon">${s.icon}</div>
+          <div class="sc-name">${s.name}</div>
+          <div class="sc-desc">${s.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="submit-row">
+      <button class="submit-btn" id="submit-btn" onclick="submitDecision()"
+        ${canSubmit(topic)?'':'disabled'}>
+        ✅ Confirmar decisiones — Ronda ${room.round}
+      </button>
+    </div>
+  `;
+}
+
+function canSubmit(topic) {
+  if(!state.strategy) return false;
+  return topic.levers.every(lev => state.decisions[lev.id]);
+}
+
+function selectLever(levId, optId) {
+  state.decisions[levId] = optId;
+  document.querySelectorAll(`.lever-card`).forEach(card => {
+    card.querySelectorAll('.lever-opt').forEach(opt => {
+      const onclick = opt.getAttribute('onclick');
+      opt.classList.toggle('selected', onclick === `selectLever('${levId}','${optId}')`);
+    });
+  });
+  const room_round = parseInt(document.getElementById('sb-round').textContent);
+  const topic = TOPICS[Math.min(room_round-1, TOPICS.length-1)];
+  const btn = document.getElementById('submit-btn');
+  if(btn) btn.disabled = !canSubmit(topic);
+}
+
+function selectStrategy(id) {
+  state.strategy = id;
+  document.querySelectorAll('.strat-card').forEach(el => {
+    el.classList.toggle('selected', el.getAttribute('onclick')===`selectStrategy('${id}')`);
+  });
+  const room_round = parseInt(document.getElementById('sb-round').textContent);
+  const topic = TOPICS[Math.min(room_round-1, TOPICS.length-1)];
+  const btn = document.getElementById('submit-btn');
+  if(btn) btn.disabled = !canSubmit(topic);
+}
+
+async function submitDecision() {
+  const room = await loadRoom(state.roomCode);
+  if(!room || room.phase!=='deciding') { showToast('⚠️ La ronda ya cerró'); return; }
+  room.submissions = room.submissions || {};
+  room.submissions[state.brandId] = {
+    brandId: state.brandId,
+    decisions: {...state.decisions},
+    strategy: state.strategy,
+    playerName: state.playerName,
+    submittedAt: Date.now(),
+  };
+  await saveRoom(state.roomCode, room);
+  state.submitted = true;
+  showToast('✅ ¡Decisiones enviadas! Esperando al resto...');
+  renderGame(room);
+}
+
+// ══════════════════════════════════════════
+// WAITING
+// ══════════════════════════════════════════
+function renderWaiting(room) {
+  const subs = Object.keys(room.submissions||{});
+  const total = room.brands.length;
+  document.getElementById('main-area').innerHTML = `
+    <div class="waiting-wrap">
+      <div class="w-icon">⏳</div>
+      <h2>Decisiones enviadas</h2>
+      <p>Esperando a que el profesor avance la ronda · ${subs.length}/${total} marcas han decidido</p>
+      <div class="waiting-brands">
+        ${room.brands.map(bid => {
+          const b = getBrand(bid);
+          const done = subs.includes(bid);
+          return `<div class="wb-pill ${done?'submitted':''}">
+            <div class="wb-dot" style="background:${b.color}"></div>
+            ${b.emoji} ${b.name} ${done?'✓':'...'}
+          </div>`;
+        }).join('')}
+      </div>
+      <p style="margin-top:24px;font-size:12px;color:var(--gray)">Esta pantalla se actualiza automáticamente cada ${REFRESH_INTERVAL/1000}s</p>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+// PROFESSOR DECIDING
+// ══════════════════════════════════════════
+function renderProfDeciding(room) {
+  const subs = Object.keys(room.submissions||{});
+  const total = room.brands.length;
+  const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
+
+  document.getElementById('main-area').innerHTML = `
+    ${renderTopicsProgress(room.round, room.totalRounds||TOTAL_ROUNDS)}
+
+    <div class="topic-banner">
+      <div class="tb-icon">${topic.icon}</div>
+      <div>
+        <div class="tb-num">Tema ${topic.num} / Ronda ${room.round}</div>
+        <div class="tb-title">${topic.title}</div>
+        <div class="tb-sub">Subtemas: ${topic.subtopics.join(' · ')}</div>
+      </div>
+    </div>
+
+    <div class="prof-panel">
+      <h3>🎛️ Panel Exclusivo Profesor</h3>
+      <div class="prof-grid">
+        <div class="prof-stat"><div class="ps-label">Ronda</div><div class="ps-val">${room.round}/${room.totalRounds||TOTAL_ROUNDS}</div></div>
+        <div class="prof-stat"><div class="ps-label">Marcas listas</div><div class="ps-val">${subs.length}/${total}</div></div>
+        <div class="prof-stat"><div class="ps-label">Líder VCM</div>
+          <div class="ps-val">${total>0?getBrand([...room.brands].sort((a,b)=>(room.equity[b]||0)-(room.equity[a]||0))[0]).emoji:'—'}</div></div>
+        <div class="prof-stat"><div class="ps-label">Fase</div><div class="ps-val" style="font-size:13px;text-transform:uppercase">${room.phase}</div></div>
+      </div>
+      <div class="prof-actions">
+        <button class="prof-btn advance" onclick="advanceRound()" ${subs.length===0?'disabled':''}>
+          ⚡ Calcular VCM (${subs.length} marca${subs.length!==1?'s':''})
+        </button>
+        <button class="prof-btn inject" onclick="injectEvent()">🌪️ Evento de Marca</button>
+        <button class="prof-btn reset" onclick="confirmReset()">🔄 Reset Sala</button>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <h3>📊 Brand Equity Actual</h3>
+      <div class="bar-chart">
+        ${[...room.brands].sort((a,b)=>(room.equity[b]||0)-(room.equity[a]||0)).map(bid => {
+          const b = getBrand(bid);
+          const eq = room.equity[bid]||INITIAL_EQUITY;
+          const pct = Math.min(100, eq);
+          return `<div class="bar-row">
+            <span class="br-label">${b.emoji} ${b.name}</span>
+            <div class="br-track">
+              <div class="br-fill" style="width:${pct}%;background:${b.color}">
+                ${pct>15?`<span>${eq.toFixed(1)}</span>`:''}
+              </div>
+            </div>
+            <span class="br-val" style="color:${b.color}">${eq.toFixed(1)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1.5px solid var(--light-border);border-radius:12px;padding:20px;">
+      <h3 style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">📋 Decisiones recibidas</h3>
+      ${subs.length===0 ? '<p style="color:var(--gray);font-size:13px">Ninguna marca ha enviado aún...</p>' :
+        subs.map(bid => {
+          const b = getBrand(bid);
+          const sub = room.submissions[bid];
+          const strat = topic.strategies.find(s=>s.id===sub.strategy);
+          const numDec = Object.keys(sub.decisions||{}).length;
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--light-border)">
+            <span style="font-size:18px">${b.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:800;color:var(--dark)">${b.name}</div>
+              <div style="font-size:10px;color:var(--gray)">${sub.playerName} · ${numDec} palancas · Estrategia: ${strat?strat.name:'—'}</div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:#16a34a">✓ Listo</span>
+          </div>`;
+        }).join('')
+      }
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+// ADVANCE ROUND — VCM CALCULATION
+// ══════════════════════════════════════════
+async function advanceRound() {
+  const room = await loadRoom(state.roomCode);
+  if(!room) return;
+
+  const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
+  const newEquity = {...room.equity};
+  const scores = {};
+
+  room.brands.forEach(bid => {
+    const sub = (room.submissions||{})[bid];
+    if(!sub) { scores[bid]=0; return; }
+    let score = 0;
+
+    // Sum scores from lever options selected
+    topic.levers.forEach(lev => {
+      const optId = sub.decisions[lev.id];
+      if(optId) {
+        const opt = lev.options.find(o=>o.id===optId);
+        if(opt) score += opt.score;
+      }
+    });
+
+    // Apply strategy multiplier
+    const strat = topic.strategies.find(s=>s.id===sub.strategy);
+    if(strat) score *= strat.multiplier;
+
+    // Apply event effects
+    if(room.event) {
+      if(sub.decisions[room.event.lever]) {
+        if(room.event.bonus) score *= room.event.bonus;
+      } else if(room.event.penalty) {
+        score *= room.event.penalty;
+      }
+    }
+
+    scores[bid] = score;
+  });
+
+  // Max possible score per round (rough ceiling)
+  const maxScore = 18 * topic.levers.length * 1.28;
+
+  room.brands.forEach(bid => {
+    const raw = scores[bid] || 0;
+    const normalized = (raw / maxScore) * 100;
+    // Delta: +/- up to 20 points from 50 baseline, blended with history
+    const delta = (normalized - 50) * 0.3;
+    const prev = newEquity[bid] || INITIAL_EQUITY;
+    newEquity[bid] = Math.max(5, Math.min(100, prev + delta));
+  });
+
+  // Save history
+  room.history = room.history || [];
+  room.history.push({
+    round: room.round,
+    equity: {...newEquity},
+    submissions: {...room.submissions},
+    event: room.event,
+  });
+
+  room.equity = newEquity;
+  room.phase = 'results';
+  room.event = EVENTS[Math.floor(Math.random()*EVENTS.length)];
+  await saveRoom(state.roomCode, room);
+  renderGame(room);
+  showToast('📊 ¡VCM calculado!');
+}
+
+// ══════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════
+function renderResults(room) {
+  const lastHistory = room.history[room.history.length-1];
+  const prevEquity = room.history.length>1 ? (room.history[room.history.length-2]?.equity || {}) : {};
+  const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
+
+  const sorted = [...room.brands].sort((a,b)=>room.equity[b]-room.equity[a]);
+  const winner = getBrand(sorted[0]);
+
+  document.getElementById('main-area').innerHTML = `
+    ${renderTopicsProgress(room.round, room.totalRounds||TOTAL_ROUNDS)}
+
+    <div class="phase-header">
+      <div>
+        <h2>📊 Resultados — Ronda ${room.round}: ${topic.title}</h2>
+        <div class="phase-sub">Brand Equity calculado · ${room.round===(room.totalRounds||TOTAL_ROUNDS)?'¡Última ronda!':'Espera la siguiente ronda'}</div>
+      </div>
+      <div class="round-status" style="background:#dcfce7;border-color:#bbf7d0;color:#166534">
+        🏆 Líder: ${winner.emoji} ${winner.name}
+      </div>
+    </div>
+
+    ${room.event ? `<div class="event-card">
+      <div class="ev-icon">${room.event.icon}</div>
+      <div>
+        <div class="ev-title">Evento Próxima Ronda</div>
+        <div class="ev-text">${room.event.text}</div>
+        <div class="ev-effect">${room.event.effect}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="results-grid">
+      ${sorted.map((bid, i) => {
+        const b = getBrand(bid);
+        const eq = room.equity[bid]||INITIAL_EQUITY;
+        const prev = prevEquity[bid] || INITIAL_EQUITY;
+        const diff = eq - prev;
+        return `<div class="result-card ${i===0?'winner':''}">
+          <div class="rc-brand">#${i+1} · ${i===0?'🥇 Líder':'Posición '+(i+1)}</div>
+          <div class="rc-name">${b.emoji} ${b.name}</div>
+          <div class="rc-equity">${eq.toFixed(1)}<span> VCM</span></div>
+          <div class="rc-change ${diff>=0?'up':'down'}">${diff>=0?'▲':'▼'} ${Math.abs(diff).toFixed(1)} pts</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="chart-wrap">
+      <h3>📈 Brand Equity por Marca</h3>
+      <div class="bar-chart">
+        ${sorted.map(bid => {
+          const b = getBrand(bid);
+          const eq = room.equity[bid]||INITIAL_EQUITY;
+          return `<div class="bar-row">
+            <span class="br-label">${b.emoji} ${b.name}</span>
+            <div class="br-track">
+              <div class="br-fill" style="width:${eq}%;background:${b.color}">
+                ${eq>15?`<span>${eq.toFixed(1)}</span>`:''}
+              </div>
+            </div>
+            <span class="br-val" style="color:${b.color}">${eq.toFixed(1)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="ai-box">
+      <div class="ai-header">
+        <span class="ai-icon">🤖</span>
+        <span class="ai-title">Análisis de Marca IA</span>
+        <span class="ai-badge">Claude</span>
+      </div>
+      <div class="ai-body loading" id="ai-analysis">Generando análisis académico...</div>
+    </div>
+
+    ${state.role==='professor' ? `
+    <div class="prof-panel">
+      <h3>🎛️ Controles Profesor</h3>
+      <div class="prof-actions">
+        ${room.round < (room.totalRounds||TOTAL_ROUNDS)
+          ? `<button class="prof-btn advance" onclick="nextRound()">▶️ Iniciar Ronda ${room.round+1}: ${TOPICS[room.round]?.title||'Tema siguiente'}</button>`
+          : `<button class="prof-btn advance" onclick="endGame()">🏁 Finalizar Simulación</button>`
+        }
+        <button class="prof-btn reset" onclick="confirmReset()">🔄 Reset Sala</button>
+      </div>
+    </div>` : `
+    <div style="background:var(--cream);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--light-border)">
+      <p style="font-size:14px;font-weight:600;color:var(--gray)">⏳ Esperando al profesor para iniciar la Ronda ${room.round+1}...</p>
+    </div>`}
+  `;
+
+  if(state.role==='student') {
+    state.submitted = false;
+    state.decisions = {};
+    state.strategy = null;
+  }
+
+  // Generate AI analysis
+  generateAIAnalysis(room, topic, sorted);
+}
+
+// ══════════════════════════════════════════
+// AI ANALYSIS (Anthropic API)
+// ══════════════════════════════════════════
+async function generateAIAnalysis(room, topic, sorted) {
+  const leader = getBrand(sorted[0]);
+  const leaderSub = room.submissions?.[sorted[0]];
+  const leaderEquity = (room.equity[sorted[0]]||INITIAL_EQUITY).toFixed(1);
+  const prevHistory = room.history.length>1 ? room.history[room.history.length-2] : null;
+
+  const decisionSummary = sorted.slice(0,3).map(bid => {
+    const b = getBrand(bid);
+    const sub = room.submissions?.[bid];
+    if(!sub) return `${b.name}: sin decisión`;
+    const decisions = Object.entries(sub.decisions||{}).map(([levId, optId]) => {
+      const lev = topic.levers.find(l=>l.id===levId);
+      const opt = lev?.options.find(o=>o.id===optId);
+      return `${lev?.name}: ${opt?.label}`;
+    }).join('; ');
+    const strat = topic.strategies.find(s=>s.id===sub.strategy);
+    return `${b.emoji} ${b.name} (VCM ${(room.equity[bid]||INITIAL_EQUITY).toFixed(1)}): [${decisions}] Estrategia: ${strat?.name}`;
+  }).join('\n');
+
+  const prompt = `Eres un profesor experto en Administración de Marca (Keller, Aaker) en UDLAP. Analiza brevemente (3-4 oraciones) los resultados de la ronda "${topic.title}" de este simulador académico.
+
+Decisiones principales (top 3 marcas):
+${decisionSummary}
+
+Líder: ${leader.emoji} ${leader.name} con VCM ${leaderEquity}
+Evento de marca activo: ${room.event?.text || 'ninguno'}
+
+Proporciona: (1) Por qué el líder tomó las mejores decisiones según teoría de VCM, (2) Qué concepto del tema (${topic.title}) explica mejor los resultados, (3) Una recomendación para la siguiente ronda. Responde en español, tono académico profesional.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.find(c=>c.type==='text')?.text || 'Sin análisis disponible.';
+    const el = document.getElementById('ai-analysis');
+    if(el) { el.textContent = text; el.classList.remove('loading'); }
+  } catch(e) {
+    const el = document.getElementById('ai-analysis');
+    if(el) { el.textContent = 'Análisis no disponible en este momento.'; el.classList.remove('loading'); }
+  }
+}
+
+// ══════════════════════════════════════════
+// NEXT / END / INJECT
+// ══════════════════════════════════════════
+async function nextRound() {
+  const room = await loadRoom(state.roomCode);
+  if(!room) return;
+  room.round += 1;
+  room.phase = 'deciding';
+  room.submissions = {};
+  await saveRoom(state.roomCode, room);
+  renderGame(room);
+  showToast(`🚀 ¡Ronda ${room.round} — ${TOPICS[room.round-1]?.title||'Tema'} iniciada!`);
+}
+
+async function endGame() {
+  const room = await loadRoom(state.roomCode);
+  if(!room) return;
+  room.phase = 'gameover';
+  await saveRoom(state.roomCode, room);
+  renderGameOver(room);
+}
+
+async function injectEvent() {
+  const room = await loadRoom(state.roomCode);
+  if(!room) return;
+  const ev = EVENTS[Math.floor(Math.random()*EVENTS.length)];
+  room.event = ev;
+  await saveRoom(state.roomCode, room);
+  showToast(`⚡ Evento inyectado: ${ev.text}`);
+  renderGame(room);
+}
+
+async function confirmReset() {
+  if(!confirm('¿Seguro que quieres reiniciar la sala? Se borrarán todos los datos.')) return;
+  const curRoom = await loadRoom(state.roomCode);
+  const totalRounds = curRoom?.totalRounds || TOTAL_ROUNDS;
+  const room = initRoomData(BRANDS.map(b=>b.id), totalRounds);
+  await saveRoom(state.roomCode, room);
+  renderGame(room);
+  showToast('🔄 Sala reiniciada');
+}
+
+// ══════════════════════════════════════════
+// GAME OVER
+// ══════════════════════════════════════════
+function renderGameOver(room) {
+  clearInterval(state.pollTimer);
+  showScreen('gameover');
+  const sorted = [...room.brands].sort((a,b)=>room.equity[b]-room.equity[a]);
+  const winner = getBrand(sorted[0]);
+  document.getElementById('go-winner').textContent = `${winner.emoji} ${winner.name} lidera con VCM ${(room.equity[winner.id]||INITIAL_EQUITY).toFixed(1)} puntos`;
+
+  const podiumOrder = sorted.length>=3 ? [sorted[1],sorted[0],sorted[2]] : sorted;
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('go-podium').innerHTML = podiumOrder.map((bid,i) => {
+    const b = getBrand(bid);
+    const origPos = sorted.length>=3 ? (i===1?0:i===0?1:2) : i;
+    return `<div class="podium-item ${origPos===0?'first':''}">
+      <div class="pod-pos">${medals[origPos]||'🏅'}</div>
+      <div class="pod-name">${b.emoji} ${b.name}</div>
+      <div class="pod-equity">${(room.equity[bid]||INITIAL_EQUITY).toFixed(1)} VCM</div>
+    </div>`;
+  }).join('');
+}
+
+function restartGame() {
+  clearInterval(state.pollTimer);
+  state = { role:null, roomCode:null, playerName:null, brandId:null,
+    decisions:{}, strategy:null, submitted:false, pollTimer:null };
+  selectedRole=null; selectedBrand=null;
+  document.getElementById('role-student').classList.remove('selected');
+  document.getElementById('role-prof').classList.remove('selected');
+  document.getElementById('student-fields').style.display='block';
+  document.getElementById('prof-fields').style.display='none';
+  document.getElementById('room-code').value='';
+  document.getElementById('room-code-prof').value='';
+  document.getElementById('prof-pass').value='';
+  document.getElementById('player-name').value='';
+  const btn = document.getElementById('join-btn');
+  btn.disabled=true; btn.textContent='Entrar al simulador →';
+  renderBrandSelector();
+  checkJoinReady();
+  showScreen('lobby');
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
