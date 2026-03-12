@@ -1237,6 +1237,10 @@ function renderProfDeciding(room) {
 async function advanceRound() {
   const room = await loadRoom(state.roomCode);
   if(!room) return;
+  if(!room.brands || room.brands.length === 0) {
+    showToast('⚠️ No hay equipos en sala. Espera a que los alumnos se unan.');
+    return;
+  }
 
   const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
   const newEquity = {...room.equity};
@@ -1309,7 +1313,19 @@ function renderResults(room) {
   const prevEquity = room.history.length>1 ? (room.history[room.history.length-2]?.equity || {}) : {};
   const topic = TOPICS[Math.min(room.round-1, TOPICS.length-1)];
 
-  const sorted = [...room.brands].sort((a,b)=>room.equity[b]-room.equity[a]);
+  const sorted = [...(room.brands||[])].sort((a,b)=>(room.equity[b]||0)-(room.equity[a]||0));
+  if(sorted.length === 0) {
+    document.getElementById('main-area').innerHTML = `
+      <div style="text-align:center;padding:80px 40px">
+        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+        <h2 style="font-size:20px;font-weight:900;color:var(--dark);margin-bottom:8px">Sin equipos en sala</h2>
+        <p style="font-size:14px;color:var(--gray)">No hay alumnos conectados. Haz Reset Sala y espera a que se unan antes de avanzar la ronda.</p>
+        <div class="prof-panel" style="margin-top:28px;display:inline-block">
+          <div class="prof-actions"><button class="prof-btn reset" onclick="confirmReset()">🔄 Reset Sala</button></div>
+        </div>
+      </div>`;
+    return;
+  }
   const winner = getBrand(sorted[0]);
 
   document.getElementById('main-area').innerHTML = `
