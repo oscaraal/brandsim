@@ -885,7 +885,7 @@ async function joinRoom() {
     state.role = 'professor'; state.roomCode = code; state.brandId = 'professor';
     let room = await loadRoom(code);
     if(!room) { room = initRoomData([], totalRounds); await saveRoom(code, room); }
-    enterGame();
+    enterGame(room);
   } else {
     const code = document.getElementById('room-code').value.trim().toUpperCase();
     const name = document.getElementById('player-name').value.trim();
@@ -906,12 +906,14 @@ async function joinRoom() {
       if(!room.equity[selectedBrand]) room.equity[selectedBrand] = INITIAL_EQUITY;
       await saveRoom(code, room);
     }
-    enterGame();
+    enterGame(room);
   }
 }
 
-function enterGame() {
+function enterGame(roomSnapshot) {
   showScreen('game');
+  // Render inmediato con los datos ya cargados (sin esperar otro fetch)
+  if(roomSnapshot) renderGame(roomSnapshot);
   startPoll();
 }
 
@@ -919,13 +921,28 @@ function enterGame() {
 // POLL
 // ══════════════════════════════════════════
 function startPoll() {
-  renderGameFromServer();
   state.pollTimer = setInterval(renderGameFromServer, REFRESH_INTERVAL);
 }
 
 async function renderGameFromServer() {
-  const room = await loadRoom(state.roomCode);
-  if(room) renderGame(room);
+  try {
+    const room = await loadRoom(state.roomCode);
+    if(room) {
+      renderGame(room);
+    } else {
+      // Sala no encontrada — mostrar aviso en main-area si está vacío
+      const ma = document.getElementById('main-area');
+      if(ma && !ma.innerHTML.trim()) {
+        ma.innerHTML = `<div style="text-align:center;padding:80px 40px">
+          <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+          <h2 style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:8px">No se pudo conectar con la sala</h2>
+          <p style="font-size:14px;color:var(--gray)">Verifica que el servidor esté activo y recarga la página.</p>
+        </div>`;
+      }
+    }
+  } catch(e) {
+    console.error('Poll error:', e);
+  }
 }
 
 function getBrand(id) { return BRANDS.find(b=>b.id===id) || {name:id, emoji:'🏷️', color:'#999'}; }
